@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hyrule Business HUD - Quest for Commerce</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts for Retro/Fantasy Aesthetic -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Press+Start+2P&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            zelda: {
+              gold: '#E5C158',
+              'gold-light': '#FDF0A6',
+              'gold-dark': '#B38B21',
+              emerald: '#10B981',
+              'emerald-glow': '#059669',
+              dark: '#0C130F',
+              panel: '#15221B',
+              border: '#334A3C',
+              parchment: '#1C2E24',
+              ruby: '#EF4444',
+              heart: '#F43F5E'
+            }
+          },
+          fontFamily: {
+            cinzel: ['Cinzel', 'serif'],
+            retro: ['"Press Start 2P"', 'cursive'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #080D0A;
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.12) 0%, transparent 60%),
+        radial-gradient(circle at 80% 80%, rgba(229, 193, 88, 0.08) 0%, transparent 50%);
+      color: #E2E8F0;
+      min-height: 100vh;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    /* Custom Zelda Gold Border Frame */
+    .zelda-card {
+      background: #111C15;
+      border: 2px solid #2B4233;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 0 12px rgba(16, 185, 129, 0.05);
+      position: relative;
+    }
+
+    .zelda-card::after {
+      content: '';
+      position: absolute;
+      top: 2px; left: 2px; right: 2px; bottom: 2px;
+      border: 1px solid rgba(229, 193, 88, 0.2);
+      pointer-events: none;
+    }
+
+    .triforce-icon {
+      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    }
+
+    /* Animated EXP Bar */
+    .exp-bar-fill {
+      transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+      background: linear-gradient(90deg, #059669 0%, #10B981 50%, #F59E0B 100%);
+      box-shadow: 0 0 16px rgba(16, 185, 129, 0.8);
+    }
+
+    .glow-gold {
+      text-shadow: 0 0 10px rgba(229, 193, 88, 0.6);
+    }
+
+    .glow-emerald {
+      text-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+    }
+
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0C130F;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #23392C;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #E5C158;
+    }
+
+    /* Level Up Modal Confetti & Animation */
+    @keyframes pulse-glow {
+      0%, 100% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.05); opacity: 1; filter: drop-shadow(0 0 20px #E5C158); }
+    }
+
+    .animate-pulse-glow {
+      animation: pulse-glow 2s infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .animate-float {
+      animation: float 3s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="p-3 sm:p-6 text-slate-200 antialiased selection:bg-zelda-gold selection:text-black">
+
+  <!-- TOP HUD HEADER -->
+  <header class="max-w-7xl mx-auto mb-6">
+    <div class="zelda-card rounded-2xl p-4 sm:p-6 bg-gradient-to-r from-zelda-panel via-[#182B20] to-zelda-panel flex flex-col lg:flex-row items-center justify-between gap-6">
+      
+      <!-- HERO TITLE & RANK BADGE -->
+      <div class="flex items-center gap-4 w-full lg:w-auto">
+        <div class="relative flex-shrink-0">
+          <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-zelda-gold to-amber-700 p-[2px] shadow-lg shadow-amber-900/30 animate-float">
+            <div class="w-full h-full bg-zelda-dark rounded-[14px] flex flex-col items-center justify-center p-1 text-center border border-zelda-gold/40">
+              <i class="fa-solid fa-shield-halved text-2xl text-zelda-gold mb-1"></i>
+              <span id="hud-level-number" class="font-retro text-xs text-zelda-gold">LV.1</span>
+            </div>
+          </div>
+          <!-- Triforce Crest -->
+          <div class="absolute -top-2 -right-2 w-6 h-6 bg-zelda-gold triforce-icon shadow-sm shadow-amber-300"></div>
+        </div>
+
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-retro tracking-widest text-zelda-gold uppercase">Hyrule Business HUD</span>
+            <button id="sfx-toggle" onclick="toggleAudio()" class="px-2 py-0.5 text-[10px] rounded bg-emerald-950 border border-emerald-700/50 text-emerald-400 hover:bg-emerald-900 transition" title="Toggle Synthesized SFX">
+              <i class="fa-solid fa-volume-high mr-1"></i><span id="sfx-status">SFX: ON</span>
+            </button>
+          </div>
+          <h1 id="hud-stage-title" class="font-cinzel text-xl sm:text-2xl font-black text-white glow-gold tracking-wide">
+            Deku Scrub <span class="text-xs text-amber-400/80 font-normal font-sans">(Novice Freelancer)</span>
+          </h1>
+          <p id="hud-rank-subtitle" class="text-xs text-emerald-400/90 font-medium mt-0.5">
+            Stage 1: Establishing Foundation & Securing First Contracts
+          </p>
+        </div>
+      </div>
+
+      <!-- MAIN EXP BAR WIDGET -->
+      <div class="w-full lg:max-w-xl flex-1 flex flex-col gap-2">
+        <div class="flex justify-between items-end text-xs font-retro">
+          <span class="text-zelda-gold flex items-center gap-1.5">
+            <i class="fa-solid fa-bolt text-amber-400 animate-pulse"></i> EXP PROGRESS
+          </span>
+          <span id="exp-text-counter" class="text-emerald-400 tracking-wider">0 / 250 EXP</span>
+        </div>
+
+        <!-- Progress Bar Track -->
+        <div class="relative w-full h-6 bg-black/60 rounded-full border-2 border-zelda-gold/50 p-0.5 overflow-hidden shadow-inner">
+          <div id="exp-bar-fill" class="exp-bar-fill h-full rounded-full w-0 relative">
+            <div class="absolute inset-0 bg-white/20 animate-pulse"></div>
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center text-[11px] text-slate-400">
+          <span id="total-exp-accumulated"><i class="fa-solid fa-coins text-amber-400 mr-1"></i>Total EXP Earned: 0</span>
+          <span id="next-rank-teaser" class="text-amber-300/80">Next Rank: Goron Trader (LV 6)</span>
+        </div>
+      </div>
+
+      <!-- HEART CONTAINERS (MOMENTUM / STREAK) -->
+      <div class="flex flex-col items-center sm:items-end justify-center gap-1.5 w-full lg:w-auto border-t lg:border-t-0 border-emerald-900/50 pt-3 lg:pt-0">
+        <span class="text-[10px] font-retro text-slate-400 uppercase tracking-widest">Business Momentum</span>
+        <div class="flex items-center gap-1.5 text-zelda-heart" id="heart-container">
+          <i class="fa-solid fa-heart text-lg animate-bounce"></i>
+          <i class="fa-solid fa-heart text-lg"></i>
+          <i class="fa-solid fa-heart text-lg"></i>
+          <i class="fa-solid fa-heart-crack text-lg text-slate-600"></i>
+        </div>
+        <span id="streak-counter-text" class="text-xs font-semibold text-emerald-400">3 Day Quest Streak</span>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT GRID -->
+  <main class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- LEFT COLUMN: QUEST BOARD & TASKS (8 COLS) -->
+    <section class="lg:col-span-8 space-y-6">
+
+      <!-- DAILY BONUS OBJECTIVES (HYRULE BOUNTIES) -->
+      <div class="zelda-card rounded-2xl p-5 sm:p-6 bg-zelda-panel/90">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 border-b border-emerald-800/40 pb-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+              <i class="fa-solid fa-scroll text-lg"></i>
+            </div>
+            <div>
+              <h2 class="font-cinzel text-lg font-bold text-white tracking-wide">Daily Hyrule Bounties</h2>
+              <p class="text-xs text-slate-400">High-EXP bonus goals that refresh daily. Clear them to maintain momentum!</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-retro text-amber-300 bg-amber-950/80 border border-amber-600/40 px-2.5 py-1 rounded-md">
+              <i class="fa-solid fa-rotate text-[9px] mr-1"></i>RESETS DAILY
+            </span>
+          </div>
+        </div>
+
+        <div id="daily-quests-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- Dynamically populated daily bonus objectives -->
+        </div>
+      </div>
+
+      <!-- CUSTOM TASK MANAGEMENT (ACTIVE QUEST LOG) -->
+      <div class="zelda-card rounded-2xl p-5 sm:p-6 bg-zelda-panel/90">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 border-b border-emerald-800/40 pb-4">
+          <div>
+            <h2 class="font-cinzel text-lg font-bold text-white tracking-wide flex items-center gap-2">
+              <i class="fa-solid fa-dungeon text-emerald-400"></i> Active Objectives & Business Tasks
+            </h2>
+            <p class="text-xs text-slate-400">Log your daily execution, outreach calls, and high-impact deliverables.</p>
+          </div>
+          <button onclick="toggleNewTaskModal(true)" class="px-4 py-2.5 bg-gradient-to-r from-zelda-gold to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold rounded-xl text-xs uppercase tracking-wider font-retro shadow-md shadow-amber-900/40 transition active:scale-95 flex items-center gap-2">
+            <i class="fa-solid fa-plus text-sm"></i> Add New Task
+          </button>
+        </div>
+
+        <!-- Category & Search Filters -->
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4 text-xs">
+          <div class="flex flex-wrap items-center gap-1.5" id="task-filter-chips">
+            <button onclick="setTaskFilter('all')" class="filter-chip active px-3 py-1.5 rounded-lg border border-zelda-gold bg-zelda-gold/20 text-zelda-gold font-semibold">All Quests</button>
+            <button onclick="setTaskFilter('Sales')" class="filter-chip px-3 py-1.5 rounded-lg border border-emerald-800/60 bg-emerald-950/40 text-slate-300 hover:text-emerald-400">Sales</button>
+            <button onclick="setTaskFilter('Marketing')" class="filter-chip px-3 py-1.5 rounded-lg border border-emerald-800/60 bg-emerald-950/40 text-slate-300 hover:text-emerald-400">Marketing</button>
+            <button onclick="setTaskFilter('Client Delivery')" class="filter-chip px-3 py-1.5 rounded-lg border border-emerald-800/60 bg-emerald-950/40 text-slate-300 hover:text-emerald-400">Client Delivery</button>
+            <button onclick="setTaskFilter('Operations')" class="filter-chip px-3 py-1.5 rounded-lg border border-emerald-800/60 bg-emerald-950/40 text-slate-300 hover:text-emerald-400">Operations</button>
+          </div>
+          <span id="active-task-count" class="text-slate-400 font-mono text-[11px]">0 Active Quests</span>
+        </div>
+
+        <!-- Custom Tasks List -->
+        <div id="custom-tasks-list" class="space-y-3 min-h-[160px]">
+          <!-- Active tasks dynamically rendered here -->
+        </div>
+      </div>
+
+      <!-- COMPLETED QUEST AUDIT LOG -->
+      <div class="zelda-card rounded-2xl p-5 sm:p-6 bg-zelda-panel/90">
+        <div class="flex items-center justify-between gap-3 mb-4 border-b border-emerald-800/40 pb-3">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-book-bookmark text-amber-400 text-lg"></i>
+            <h2 class="font-cinzel text-lg font-bold text-white tracking-wide">Completed Quest Audit Log</h2>
+          </div>
+          <button onclick="clearAuditLog()" class="text-xs text-rose-400 hover:text-rose-300 transition underline font-mono">Clear History</button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-black/40 text-amber-300 uppercase font-retro text-[9px] tracking-wider border-b border-emerald-800/40">
+              <tr>
+                <th class="p-2.5">Date & Time</th>
+                <th class="p-2.5">Objective</th>
+                <th class="p-2.5">Category</th>
+                <th class="p-2.5 text-right">EXP Awarded</th>
+              </tr>
+            </thead>
+            <tbody id="audit-log-tbody" class="divide-y divide-emerald-900/30">
+              <!-- Log entries appended dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT COLUMN: DEKU WISDOM & PROGRESSION MAP (4 COLS) -->
+    <section class="lg:col-span-4 space-y-6">
+
+      <!-- THE GREAT DEKU WISDOM (STRATEGIC ADVISOR) -->
+      <div class="zelda-card rounded-2xl p-5 sm:p-6 bg-gradient-to-b from-[#16271D] to-zelda-panel relative overflow-hidden">
+        <div class="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-xl bg-emerald-950 border border-emerald-500/50 flex items-center justify-center text-emerald-400 shadow-md">
+            <i class="fa-solid fa-tree text-xl"></i>
+          </div>
+          <div>
+            <h3 class="font-cinzel text-base font-bold text-white">The Great Deku Wisdom</h3>
+            <p class="text-[11px] text-emerald-400 font-medium">Strategic Stage Advisor</p>
+          </div>
+        </div>
+
+        <!-- Stage Assessment Card -->
+        <div class="bg-black/40 border border-emerald-800/50 rounded-xl p-3.5 mb-4 space-y-2">
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-slate-400">Current Phase:</span>
+            <span id="advisor-phase-tag" class="font-semibold text-amber-300 font-mono">Stage 1 / 5</span>
+          </div>
+          <p id="advisor-summary" class="text-xs text-slate-300 leading-relaxed">
+            You are establishing your brand presence and hunting for initial sales leads. Focus heavily on direct outreach, setting up agreements, and closing deposit payments.
+          </p>
+        </div>
+
+        <!-- Immediate Next Steps Checklist -->
+        <div class="space-y-2.5">
+          <h4 class="text-xs font-retro text-zelda-gold uppercase tracking-wider flex items-center gap-1.5">
+            <i class="fa-solid fa-compass text-amber-400"></i> Immediate Next Steps
+          </h4>
+          <ul id="advisor-next-steps" class="space-y-2 text-xs text-slate-200">
+            <!-- Dynamic guidance checklist items -->
+          </ul>
+        </div>
+      </div>
+
+      <!-- BUSINESS GROWTH STAGE ROADMAP -->
+      <div class="zelda-card rounded-2xl p-5 sm:p-6 bg-zelda-panel/90">
+        <h3 class="font-cinzel text-base font-bold text-white mb-3 flex items-center gap-2 border-b border-emerald-800/40 pb-2">
+          <i class="fa-solid fa-map-location-dot text-amber-400"></i> Hyrule Rank Map
+        </h3>
+
+        <div class="space-y-3 relative before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-emerald-900/60">
+          
+          <!-- Stage 1 -->
+          <div id="stage-card-1" class="relative pl-8 text-xs p-2.5 rounded-xl border transition border-amber-500/50 bg-amber-950/20">
+            <div class="absolute left-1.5 top-3.5 w-3 h-3 rounded-full bg-amber-400 border-2 border-slate-900"></div>
+            <div class="flex justify-between items-center mb-1">
+              <span class="font-bold text-amber-300 font-cinzel">Lv 1 - 5: Deku Scrub</span>
+              <span class="text-[10px] font-mono text-amber-400 bg-amber-950 px-1.5 py-0.5 rounded">Current</span>
+            </div>
+            <p class="text-[11px] text-slate-300">Novice Freelancer • Direct cold calls, lead generation, contract setups, initial client onboarding.</p>
+          </div>
+
+          <!-- Stage 2 -->
+          <div id="stage-card-2" class="relative pl-8 text-xs p-2.5 rounded-xl border border-emerald-900/40 bg-black/30 opacity-70">
+            <div class="absolute left-1.5 top-3.5 w-3 h-3 rounded-full bg-emerald-900 border-2 border-slate-900"></div>
+            <div class="flex justify-between items-center mb-1">
+              <span class="font-bold text-emerald-400 font-cinzel">Lv 6 - 12: Goron Trader</span>
+              <span class="text-[10px] font-mono text-slate-500">Locked</span>
+            </div>
+            <p class="text-[11px] text-slate-400">Guild Artisan • Consistent retainers, refined portfolio, client referral workflows, standardized pricing.</p>
+          </div>
+
+          <!-- Stage 3 -->
+          <div id="stage-card-3" class="relative pl-8 text-xs p-2.5 rounded-xl border border-emerald-900/40 bg-black/30 opacity-70">
+            <div class="absolute left-1.5 top-3.5 w-3 h-3 rounded-full bg-emerald-900 border-2 border-slate-900"></div>
+            <div class="flex justify-between items-center mb-1">
+              <span class="font-bold text-cyan-400 font-cinzel">Lv 13 - 20: Zora Financier</span>
+              <span class="text-[10px] font-mono text-slate-500">Locked</span>
+            </div>
+            <p class="text-[11px] text-slate-400">Master Architect • High-value contracts, sub-contracting/outsourcing, predictable monthly recurring revenue.</p>
+          </div>
+
+          <!-- Stage 4 -->
+          <div id="stage-card-4" class="relative pl-8 text-xs p-2.5 rounded-xl border border-emerald-900/40 bg-black/30 opacity-70">
+            <div class="absolute left-1.5 top-3.5 w-3 h-3 rounded-full bg-emerald-900 border-2 border-slate-900"></div>
+            <div class="flex justify-between items-center mb-1">
+              <span class="font-bold text-purple-400 font-cinzel">Lv 21 - 30: Sheikah Tactician</span>
+              <span class="text-[10px] font-mono text-slate-500">Locked</span>
+            </div>
+            <p class="text-[11px] text-slate-400">Enterprise Champion • Automated lead pipelines, multi-service agency structure, full brand domination.</p>
+          </div>
+
+          <!-- Stage 5 -->
+          <div id="stage-card-5" class="relative pl-8 text-xs p-2.5 rounded-xl border border-emerald-900/40 bg-black/30 opacity-70">
+            <div class="absolute left-1.5 top-3.5 w-3 h-3 rounded-full bg-emerald-900 border-2 border-slate-900"></div>
+            <div class="flex justify-between items-center mb-1">
+              <span class="font-bold text-zelda-gold font-cinzel">Lv 31+: Hero of Commerce</span>
+              <span class="text-[10px] font-mono text-slate-500">Locked</span>
+            </div>
+            <p class="text-[11px] text-slate-400">Legendary Tycoon • Equity investments, passive digital products, industry thought leader.</p>
+          </div>
+
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ADD TASK MODAL -->
+  <div id="task-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4 z-50">
+    <div class="zelda-card rounded-2xl max-w-lg w-full p-6 bg-zelda-panel border-2 border-zelda-gold/60 shadow-2xl relative animate-float">
+      
+      <div class="flex justify-between items-center border-b border-emerald-800/60 pb-3 mb-4">
+        <h3 class="font-cinzel text-lg font-bold text-zelda-gold flex items-center gap-2">
+          <i class="fa-solid fa-scroll text-amber-400"></i> Issue New Business Quest
+        </h3>
+        <button onclick="toggleNewTaskModal(false)" class="text-slate-400 hover:text-white transition">
+          <i class="fa-solid fa-xmark text-xl"></i>
+        </button>
+      </div>
+
+      <form id="task-form" onsubmit="handleCreateTask(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Quest Title / Objective</label>
+          <input type="text" id="task-title-input" required placeholder="e.g., Cold call 5 prospective clients in Levittown" 
+            class="w-full bg-black/50 border border-emerald-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-zelda-gold transition">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Category</label>
+            <select id="task-category-input" class="w-full bg-black/50 border border-emerald-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-zelda-gold">
+              <option value="Sales">Sales & Outreach</option>
+              <option value="Marketing">Marketing & Content</option>
+              <option value="Client Delivery">Client Delivery & Build</option>
+              <option value="Operations">Operations & Systems</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Difficulty & EXP Reward</label>
+            <select id="task-difficulty-input" class="w-full bg-black/50 border border-emerald-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-zelda-gold">
+              <option value="50">Easy (+50 EXP)</option>
+              <option value="100" selected>Medium (+100 EXP)</option>
+              <option value="200">Hard (+200 EXP)</option>
+              <option value="500">Boss Battle (+500 EXP)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="pt-2 flex justify-end gap-3">
+          <button type="button" onclick="toggleNewTaskModal(false)" class="px-4 py-2.5 rounded-xl border border-emerald-800 text-xs text-slate-300 hover:bg-emerald-950 transition">Cancel</button>
+          <button type="submit" class="px-5 py-2.5 bg-gradient-to-r from-zelda-gold to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold font-retro text-xs rounded-xl shadow-lg transition">
+            Dispatch Quest
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- LEVEL UP CELEBRATION MODAL -->
+  <div id="levelup-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md hidden flex-col items-center justify-center p-4 z-50">
+    <div class="text-center max-w-md w-full space-y-5 animate-pulse-glow">
+      
+      <div class="w-24 h-24 mx-auto bg-gradient-to-br from-zelda-gold via-amber-400 to-yellow-600 rounded-full flex items-center justify-center shadow-2xl border-4 border-white/40">
+        <i class="fa-solid fa-crown text-4xl text-slate-950"></i>
+      </div>
+
+      <div>
+        <span class="font-retro text-xs text-amber-300 tracking-widest uppercase">LEVEL UP ACHIEVED!</span>
+        <h2 id="levelup-title-text" class="font-cinzel text-3xl font-black text-white glow-gold mt-1">LEVEL 2 REACHED</h2>
+        <p id="levelup-subtitle-text" class="text-xs text-emerald-400 font-semibold mt-1">New Rank Unlocked: Deku Scrub</p>
+      </div>
+
+      <div class="zelda-card p-4 rounded-xl text-xs text-slate-200 border border-zelda-gold/60 bg-zelda-panel/95 space-y-2">
+        <p id="levelup-desc-text" class="text-slate-300 leading-relaxed">
+          Your business prowess grows! You have unlocked higher contract confidence and deeper market understanding.
+        </p>
+      </div>
+
+      <button onclick="closeLevelUpModal()" class="px-8 py-3 bg-gradient-to-r from-zelda-gold via-amber-400 to-amber-500 text-slate-950 font-black font-retro text-xs rounded-2xl shadow-xl hover:scale-105 transition transform active:scale-95">
+        CONTINUE QUEST
+      </button>
+
+    </div>
+  </div>
+
+  <!-- APP LOGIC & STATE ENGINE -->
+  <script>
+    // --- SYNTHESIZED WEB AUDIO API SFX ENGINE ---
+    let audioEnabled = true;
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new AudioContext();
+      }
+    }
+
+    function toggleAudio() {
+      audioEnabled = !audioEnabled;
+      document.getElementById('sfx-status').innerText = audioEnabled ? "SFX: ON" : "SFX: OFF";
+      if (audioEnabled) playChime(880, 'sine', 0.1);
+    }
+
+    function playChime(freq, type = 'sine', duration = 0.15) {
+      if (!audioEnabled) return;
+      try {
+        initAudio();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) { console.log(e); }
+    }
+
+    function playTaskCompleteSFX() {
+      if (!audioEnabled) return;
+      initAudio();
+      // Arpeggio chime
+      const notes = [523.25, 659.25, 783.99, 1046.50];
+      notes.forEach((freq, idx) => {
+        setTimeout(() => playChime(freq, 'triangle', 0.2), idx * 80);
+      });
+    }
+
+    function playLevelUpSFX() {
+      if (!audioEnabled) return;
+      initAudio();
+      // Zelda Fanfare style tones
+      const notes = [440, 493.88, 523.25, 587.33, 659.25, 698.46, 783.99, 880, 1046.5];
+      notes.forEach((freq, idx) => {
+        setTimeout(() => playChime(freq, 'square', 0.25), idx * 100);
+      });
+    }
+
+    // --- GAME DATA & STATE ---
+    const RANK_TIERS = [
+      { minLv: 1, maxLv: 5, title: "Deku Scrub", subtitle: "Novice Freelancer", stage: 1, desc: "Establishing initial services, performing cold calls, and securing first contracts." },
+      { minLv: 6, maxLv: 12, title: "Goron Trader", subtitle: "Guild Artisan", stage: 2, desc: "Building consistent client retainers, standardized service packages, and strong portfolio." },
+      { minLv: 13, maxLv: 20, title: "Zora Financier", subtitle: "Master Architect", stage: 3, desc: "Managing high-ticket contracts, team sub-contracting, and predictable cash flow." },
+      { minLv: 21, maxLv: 30, title: "Sheikah Tactician", subtitle: "Enterprise Champion", stage: 4, desc: "Automated inbound sales pipelines, multi-channel marketing, and business scaling." },
+      { minLv: 31, maxLv: 99, title: "Hero of Commerce", subtitle: "Legendary Tycoon", stage: 5, desc: "Equity investments, digital asset creation, and commanding market authority." }
+    ];
+
+    const DEFAULT_DAILY_QUESTS = [
+      { id: 'dq-1', title: 'Make 3 Local Cold Calls', category: 'Sales', exp: 200, completed: false },
+      { id: 'dq-2', title: 'Send 1 Contract / Invoice', category: 'Sales', exp: 250, completed: false },
+      { id: 'dq-3', title: 'Audit 2 Competitor Sites', category: 'Marketing', exp: 150, completed: false },
+      { id: 'dq-4', title: 'Follow Up with Pending Prospect', category: 'Sales', exp: 180, completed: false }
+    ];
+
+    let state = {
+      level: 1,
+      currentExp: 0,
+      totalExp: 0,
+      streak: 3,
+      lastActiveDate: new Date().toDateString(),
+      dailyQuests: DEFAULT_DAILY_QUESTS,
+      customTasks: [
+        { id: 'ct-1', title: 'Prepare sales discovery call outline', category: 'Sales', exp: 100 },
+        { id: 'ct-2', title: 'Configure SignWell & PayPal checkout page', category: 'Operations', exp: 200 }
+      ],
+      auditLog: [],
+      taskFilter: 'all'
+    };
+
+    // --- INITIALIZATION ---
+    window.onload = function() {
+      loadState();
+      checkDailyReset();
+      renderAll();
+    };
+
+    function saveState() {
+      localStorage.setItem('hyrule_biz_hud_state', JSON.stringify(state));
+    }
+
+    function loadState() {
+      const saved = localStorage.getItem('hyrule_biz_hud_state');
+      if (saved) {
+        try {
+          state = { ...state, ...JSON.parse(saved) };
+        } catch (e) {
+          console.error("Error loading state", e);
+        }
+      }
+    }
+
+    function checkDailyReset() {
+      const today = new Date().toDateString();
+      if (state.lastActiveDate !== today) {
+        state.lastActiveDate = today;
+        // Reset daily quests
+        state.dailyQuests = DEFAULT_DAILY_QUESTS.map(q => ({ ...q, completed: false }));
+        saveState();
+      }
+    }
+
+    // --- EXP & LEVEL CALCULATIONS ---
+    function getExpForNextLevel(lv) {
+      return Math.round(200 * Math.pow(1.18, lv - 1));
+    }
+
+    function getCurrentTier(lv) {
+      return RANK_TIERS.find(t => lv >= t.minLv && lv <= t.maxLv) || RANK_TIERS[RANK_TIERS.length - 1];
+    }
+
+    function addExp(amount, taskTitle, category) {
+      state.currentExp += amount;
+      state.totalExp += amount;
+
+      // Log in audit trail
+      const now = new Date();
+      state.auditLog.unshift({
+        id: Date.now(),
+        title: taskTitle,
+        category: category || 'General',
+        exp: amount,
+        timestamp: `${now.toLocaleDateString()} ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+      });
+
+      let reqExp = getExpForNextLevel(state.level);
+      let leveledUp = false;
+      let newLevel = state.level;
+
+      while (state.currentExp >= reqExp) {
+        state.currentExp -= reqExp;
+        newLevel++;
+        reqExp = getExpForNextLevel(newLevel);
+        leveledUp = true;
+      }
+
+      if (leveledUp) {
+        state.level = newLevel;
+        showLevelUpModal(state.level);
+        playLevelUpSFX();
+      } else {
+        playTaskCompleteSFX();
+      }
+
+      saveState();
+      renderAll();
+    }
+
+    // --- RENDER FUNCTIONS ---
+    function renderAll() {
+      renderHUDHeader();
+      renderDailyQuests();
+      renderCustomTasks();
+      renderAuditLog();
+      renderAdvisor();
+      renderRoadmap();
+    }
+
+    function renderHUDHeader() {
+      const tier = getCurrentTier(state.level);
+      const nextExp = getExpForNextLevel(state.level);
+      const expPercent = Math.min(100, Math.round((state.currentExp / nextExp) * 100));
+
+      document.getElementById('hud-level-number').innerText = `LV.${state.level}`;
+      document.getElementById('hud-stage-title').innerHTML = `${tier.title} <span class="text-xs text-amber-400/80 font-normal font-sans">(${tier.subtitle})</span>`;
+      document.getElementById('hud-rank-subtitle').innerText = `Stage ${tier.stage}: ${tier.desc}`;
+      
+      document.getElementById('exp-text-counter').innerText = `${state.currentExp} / ${nextExp} EXP`;
+      document.getElementById('exp-bar-fill').style.width = `${expPercent}%`;
+      document.getElementById('total-exp-accumulated').innerHTML = `<i class="fa-solid fa-coins text-amber-400 mr-1"></i>Total EXP Earned: ${state.totalExp}`;
+      
+      const nextTier = RANK_TIERS.find(t => t.stage === tier.stage + 1);
+      document.getElementById('next-rank-teaser').innerText = nextTier ? `Next Tier: ${nextTier.title} (LV ${nextTier.minLv})` : 'Max Tier Reached!';
+      document.getElementById('streak-counter-text').innerText = `${state.streak} Day Quest Streak`;
+    }
+
+    function renderDailyQuests() {
+      const container = document.getElementById('daily-quests-list');
+      container.innerHTML = state.dailyQuests.map(q => `
+        <div class="p-3.5 rounded-xl border ${q.completed ? 'border-emerald-800/30 bg-emerald-950/10 opacity-60' : 'border-amber-600/40 bg-amber-950/20 hover:border-amber-400'} transition flex items-center justify-between gap-3">
+          <div class="space-y-0.5">
+            <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded ${q.completed ? 'bg-slate-800 text-slate-400' : 'bg-amber-900/60 text-amber-300'}">${q.category}</span>
+            <h4 class="text-xs font-semibold ${q.completed ? 'line-through text-slate-400' : 'text-slate-100'}">${q.title}</h4>
+            <span class="text-[11px] font-bold text-amber-400">+${q.exp} EXP</span>
+          </div>
+          ${q.completed ? `
+            <span class="text-xs text-emerald-400 font-bold font-mono flex items-center gap-1"><i class="fa-solid fa-check-double"></i> Done</span>
+          ` : `
+            <button onclick="completeDailyQuest('${q.id}')" class="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-slate-950 font-bold text-[11px] rounded-lg shadow transition active:scale-95">
+              Claim
+            </button>
+          `}
+        </div>
+      `).join('');
+    }
+
+    function renderCustomTasks() {
+      const container = document.getElementById('custom-tasks-list');
+      const filtered = state.customTasks.filter(t => state.taskFilter === 'all' || t.category === state.taskFilter);
+      
+      document.getElementById('active-task-count').innerText = `${filtered.length} Active Quests`;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-8 text-slate-500 text-xs border border-dashed border-emerald-900/50 rounded-xl">
+            <i class="fa-solid fa-check-circle text-2xl mb-2 text-emerald-800"></i>
+            <p>No active tasks in this category. Click "+ Add New Task" above to issue a quest!</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(t => `
+        <div class="p-3.5 rounded-xl border border-emerald-800/40 bg-black/40 hover:border-zelda-gold/50 transition flex items-center justify-between gap-3 group">
+          <div class="flex items-center gap-3">
+            <button onclick="completeCustomTask('${t.id}')" class="w-6 h-6 rounded-lg border-2 border-emerald-600/60 hover:border-emerald-400 hover:bg-emerald-500/20 flex items-center justify-center text-emerald-400 transition" title="Mark Completed">
+              <i class="fa-solid fa-check text-xs opacity-0 group-hover:opacity-100"></i>
+            </button>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-950 border border-emerald-800 text-emerald-300">${t.category}</span>
+                <span class="text-[11px] font-bold text-amber-400 font-mono">+${t.exp} EXP</span>
+              </div>
+              <h4 class="text-xs font-medium text-slate-200 mt-0.5">${t.title}</h4>
+            </div>
+          </div>
+          <button onclick="deleteCustomTask('${t.id}')" class="text-slate-500 hover:text-rose-400 text-xs p-1 transition" title="Delete Task">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function renderAuditLog() {
+      const tbody = document.getElementById('audit-log-tbody');
+      if (state.auditLog.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="4" class="text-center py-6 text-slate-500 text-xs">No completed quests logged yet. Clear objectives above to build your audit trail!</td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = state.auditLog.map(item => `
+        <tr class="hover:bg-emerald-950/20 transition">
+          <td class="p-2.5 text-slate-400 font-mono text-[11px]">${item.timestamp}</td>
+          <td class="p-2.5 font-medium text-slate-200">${item.title}</td>
+          <td class="p-2.5"><span class="px-2 py-0.5 rounded bg-emerald-950 border border-emerald-800 text-emerald-300 text-[10px]">${item.category}</span></td>
+          <td class="p-2.5 text-right font-bold text-amber-400 font-mono">+${item.exp} EXP</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderAdvisor() {
+      const tier = getCurrentTier(state.level);
+      document.getElementById('advisor-phase-tag').innerText = `Stage ${tier.stage} / 5`;
+      document.getElementById('advisor-summary').innerText = tier.desc;
+
+      const stepsMap = {
+        1: [
+          'Execute direct outreach (minimum 3-5 cold calls or local touchpoints daily).',
+          'Deploy standardized SignWell contract templates & PayPal deposit links.',
+          'Rebut common objections (e.g., maintaining existing booking systems).'
+        ],
+        2: [
+          'Convert one-time clients into monthly maintenance/SEO retainers.',
+          'Establish a client referral program with incentive discounts.',
+          'Develop standardized Figma design templates to increase build speed.'
+        ],
+        3: [
+          'Raise project minimums to high-ticket tiers ($2,500+).',
+          'Outsource routine tasks to specialized sub-contractors.',
+          'Implement automated CRM lead nurture workflows.'
+        ],
+        4: [
+          'Run targeted local ads & multi-channel content pipelines.',
+          'Build custom web app solutions for enterprise clients.',
+          'Standardize team SOPs for total operational delegation.'
+        ],
+        5: [
+          'Explore digital product launches & SaaS extensions.',
+          'Acquire equity in high-performing client businesses.',
+          'Deliver keynote talks and mentor emerging agency owners.'
+        ]
+      };
+
+      const steps = stepsMap[tier.stage] || stepsMap[1];
+      document.getElementById('advisor-next-steps').innerHTML = steps.map(s => `
+        <li class="flex items-start gap-2">
+          <i class="fa-solid fa-caret-right text-amber-400 mt-0.5"></i>
+          <span>${s}</span>
+        </li>
+      `).join('');
+    }
+
+    function renderRoadmap() {
+      const currentTier = getCurrentTier(state.level);
+      for (let i = 1; i <= 5; i++) {
+        const card = document.getElementById(`stage-card-${i}`);
+        if (i === currentTier.stage) {
+          card.className = "relative pl-8 text-xs p-2.5 rounded-xl border border-amber-500/60 bg-amber-950/30 shadow-md";
+        } else if (i < currentTier.stage) {
+          card.className = "relative pl-8 text-xs p-2.5 rounded-xl border border-emerald-700/50 bg-emerald-950/30 opacity-90";
+        } else {
+          card.className = "relative pl-8 text-xs p-2.5 rounded-xl border border-emerald-900/40 bg-black/30 opacity-60";
+        }
+      }
+    }
+
+    // --- ACTIONS ---
+    function completeDailyQuest(questId) {
+      const q = state.dailyQuests.find(item => item.id === questId);
+      if (q && !q.completed) {
+        q.completed = true;
+        addExp(q.exp, `[Daily Bounty] ${q.title}`, q.category);
+      }
+    }
+
+    function completeCustomTask(taskId) {
+      const idx = state.customTasks.findIndex(t => t.id === taskId);
+      if (idx !== -1) {
+        const task = state.customTasks[idx];
+        state.customTasks.splice(idx, 1);
+        addExp(task.exp, task.title, task.category);
+      }
+    }
+
+    function deleteCustomTask(taskId) {
+      state.customTasks = state.customTasks.filter(t => t.id !== taskId);
+      saveState();
+      renderCustomTasks();
+      playChime(300, 'sine', 0.1);
+    }
+
+    function setTaskFilter(category) {
+      state.taskFilter = category;
+      document.querySelectorAll('#task-filter-chips button').forEach(btn => {
+        btn.classList.remove('border-zelda-gold', 'bg-zelda-gold/20', 'text-zelda-gold');
+        btn.classList.add('border-emerald-800/60', 'bg-emerald-950/40', 'text-slate-300');
+      });
+      event.target.classList.add('border-zelda-gold', 'bg-zelda-gold/20', 'text-zelda-gold');
+      renderCustomTasks();
+    }
+
+    function handleCreateTask(e) {
+      e.preventDefault();
+      const title = document.getElementById('task-title-input').value.trim();
+      const category = document.getElementById('task-category-input').value;
+      const exp = parseInt(document.getElementById('task-difficulty-input').value, 10);
+
+      if (!title) return;
+
+      state.customTasks.push({
+        id: 'task-' + Date.now(),
+        title: title,
+        category: category,
+        exp: exp
+      });
+
+      document.getElementById('task-form').reset();
+      toggleNewTaskModal(false);
+      saveState();
+      renderCustomTasks();
+      playChime(600, 'sine', 0.15);
+    }
+
+    function clearAuditLog() {
+      if (confirm("Are you sure you want to clear your completed quest log?")) {
+        state.auditLog = [];
+        saveState();
+        renderAuditLog();
+      }
+    }
+
+    function toggleNewTaskModal(show) {
+      const modal = document.getElementById('task-modal');
+      modal.style.display = show ? 'flex' : 'none';
+    }
+
+    function showLevelUpModal(newLv) {
+      const tier = getCurrentTier(newLv);
+      document.getElementById('levelup-title-text').innerText = `LEVEL ${newLv} REACHED`;
+      document.getElementById('levelup-subtitle-text').innerText = `Rank Title: ${tier.title} (${tier.subtitle})`;
+      document.getElementById('levelup-desc-text').innerText = tier.desc;
+      document.getElementById('levelup-modal').style.display = 'flex';
+    }
+
+    function closeLevelUpModal() {
+      document.getElementById('levelup-modal').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
